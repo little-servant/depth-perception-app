@@ -35,6 +35,9 @@ const RoomScene = dynamic(
 const storageKey = "dlab_poe_v1";
 const toggleSoundVolume = 0.1;
 const toggleBeepDurationSeconds = 0.08;
+const emptyCompletedCueIds: Array<keyof DepthCueState> = [];
+let cachedCompletedCueIdsRaw: string | null | undefined;
+let cachedCompletedCueIdsSnapshot: Array<keyof DepthCueState> = emptyCompletedCueIds;
 
 const defaultPOEState: POEStateMap = {
   perspective: { stage: "idle", prediction: null },
@@ -151,25 +154,39 @@ function readGyroscope(value: unknown): GyroscopeReading | null {
 
 function readCompletedCueIds(): Array<keyof DepthCueState> {
   if (typeof window === "undefined") {
-    return [];
+    return emptyCompletedCueIds;
   }
 
+  const raw = window.localStorage.getItem(storageKey);
+  if (raw === cachedCompletedCueIdsRaw) {
+    return cachedCompletedCueIdsSnapshot;
+  }
+
+  cachedCompletedCueIdsRaw = raw;
+
   try {
-    const raw = window.localStorage.getItem(storageKey);
     if (!raw) {
-      return [];
+      cachedCompletedCueIdsSnapshot = emptyCompletedCueIds;
+      return cachedCompletedCueIdsSnapshot;
     }
 
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
-      return [];
+      cachedCompletedCueIdsSnapshot = emptyCompletedCueIds;
+      return cachedCompletedCueIdsSnapshot;
     }
 
-    return parsed.filter((value): value is keyof DepthCueState => {
+    const nextCompletedCueIds = parsed.filter((value): value is keyof DepthCueState => {
       return typeof value === "string" && isCueId(value);
     });
+
+    cachedCompletedCueIdsSnapshot =
+      nextCompletedCueIds.length > 0 ? nextCompletedCueIds : emptyCompletedCueIds;
+
+    return cachedCompletedCueIdsSnapshot;
   } catch {
-    return [];
+    cachedCompletedCueIdsSnapshot = emptyCompletedCueIds;
+    return cachedCompletedCueIdsSnapshot;
   }
 }
 
@@ -198,7 +215,7 @@ export default function ExplorePage() {
   const completedCueIds = useSyncExternalStore(
     subscribeToCompletedCueIds,
     readCompletedCueIds,
-    () => [],
+    () => emptyCompletedCueIds,
   );
   const orientationCapabilityKey = useSyncExternalStore(
     subscribeToOrientationCapability,
@@ -406,7 +423,12 @@ export default function ExplorePage() {
   const persistCompletedCue = (cueId: keyof DepthCueState) => {
     const completedCueIds = new Set(readCompletedCueIds());
     completedCueIds.add(cueId);
-    window.localStorage.setItem(storageKey, JSON.stringify(Array.from(completedCueIds)));
+    const nextCompletedCueIds = Array.from(completedCueIds);
+    const nextCompletedCueIdsRaw = JSON.stringify(nextCompletedCueIds);
+
+    cachedCompletedCueIdsRaw = nextCompletedCueIdsRaw;
+    cachedCompletedCueIdsSnapshot = nextCompletedCueIds;
+    window.localStorage.setItem(storageKey, nextCompletedCueIdsRaw);
   };
 
   const playSyntheticToggleSound = (kind: ToggleSoundKind) => {
