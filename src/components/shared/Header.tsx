@@ -13,7 +13,7 @@ export function Header() {
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       className="panel-surface sticky top-4 z-20 rounded-[32px] px-5 py-4 sm:px-6 sm:py-5"
     >
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <Link href="/explore" className="flex items-center gap-4">
           <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(0,212,170,0.36),rgba(10,10,15,0.24))]">
             <span className="absolute inset-[10px] rounded-[14px] border border-white/15" />

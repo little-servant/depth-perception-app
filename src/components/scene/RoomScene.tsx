@@ -414,7 +414,7 @@ export function RoomScene({
   return (
     <div className="scene-shell relative h-[58vh] min-h-[460px] w-full md:h-[64vh] md:min-h-[560px]">
       <Canvas
-        shadows
+        shadows="percentage"
         dpr={[1, 1.35]}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
